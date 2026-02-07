@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma:*)",
+      "Bash(ls:*)",
+      "Bash(/Users/wonjoon/Workspace/hackathon-starter-moru/node_modules/.bin/prisma:*)",
+      "Bash(pnpm exec prisma:*)",
+      "Bash(corepack enable:*)",
+      "Bash(pnpm --version:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm db:generate:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm build:template:*)",
+      "Bash(moru template list:*)",
+      "Bash(curl:*)",
+      "Bash(moru sandbox logs:*)",
+      "Bash(moru sandbox exec:*)",
+      "Bash(moru sandbox kill:*)",
+      "Bash(moru sandbox list:*)",
+      "Bash(source:*)",
+      "Bash(node:*)",
+      "Bash(python3:*)",
+      "Bash(MORU_API_KEY=$MORU_API_KEY node -e \"\nconst { default: Sandbox } = require\\(''@moru-ai/core''\\);\nasync function test\\(\\) {\n  const sbx = await Sandbox.connect\\(''itlw6znetse5dw48jzbqi''\\);\n  const result = await sbx.commands.run\\(''cat /workspace/data/.agent-complete''\\);\n  console.log\\(''Exit code:'', result.exitCode\\);\n  console.log\\(''Stdout:'', result.stdout\\);\n\n  const sessionResult = await sbx.commands.run\\(''cat /workspace/data/.claude/projects/-workspace-data/b51c9876-60dc-4643-8b8a-a6900464fb0f.jsonl | head -c 200''\\);\n  console.log\\(''Session preview:'', sessionResult.stdout\\);\n}\ntest\\(\\).catch\\(e => console.error\\(e.message\\)\\);\n\")",
+      "Bash(git -C /Users/wonjoon/Workspace/hackathon-starter-moru branch --show-current)"
+    ]
+  }
+}

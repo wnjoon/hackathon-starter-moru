@@ -125,11 +125,34 @@ class LineReader {
  */
 function flushVolume(): void {
   try {
-    debug("Flushing volume (sync)...");
+    debug("Flushing volume (sync + verify)...");
+    execSync("sync", { timeout: 10_000 });
+    // Force metadata flush by listing the session directory
+    execSync("ls -la /workspace/data/.claude/projects/-workspace-data/ 2>/dev/null || true", { timeout: 5_000 });
     execSync("sync", { timeout: 10_000 });
     debug("Volume flush complete");
   } catch (e) {
     debug("Volume flush failed (non-fatal)", { error: String(e) });
+  }
+}
+
+/**
+ * Write a completion marker file to the volume so the polling endpoint
+ * can detect completion even when the callback URL is unreachable (e.g. localhost).
+ */
+function writeCompletionMarker(sessionId?: string, status: string = "completed", errorMessage?: string): void {
+  try {
+    const workspace = process.env.WORKSPACE_DIR || "/workspace/data";
+    const marker = JSON.stringify({
+      status,
+      sessionId,
+      errorMessage,
+      timestamp: new Date().toISOString(),
+    });
+    fs.writeFileSync(path.join(workspace, ".agent-complete"), marker);
+    debug("Wrote completion marker", { status, sessionId });
+  } catch (e) {
+    debug("Failed to write completion marker (non-fatal)", { error: String(e) });
   }
 }
 
@@ -162,12 +185,14 @@ async function callCallback(status: "completed" | "error", sessionId?: string, e
 async function main() {
   const workspace = process.env.WORKSPACE_DIR || process.cwd();
   const resumeSessionId = process.env.RESUME_SESSION_ID || undefined;
+  const claudeModel = process.env.CLAUDE_MODEL || undefined;
 
   // Debug: Log startup info
   debug("Agent starting");
   debug("Environment", {
     workspace,
     resumeSessionId,
+    claudeModel,
     HOME: process.env.HOME,
     CALLBACK_URL: process.env.CALLBACK_URL,
     cwd: process.cwd(),
@@ -297,6 +322,7 @@ async function main() {
         cwd: workspace,
         resume: sessionIdToResume,
         settingSources: ["user", "project"], // Load ~/.claude/CLAUDE.md, skills, and project settings
+        ...(claudeModel ? { model: claudeModel } : {}),
       },
     })) {
       // Debug: Log each message type from query
@@ -327,7 +353,8 @@ async function main() {
           },
         });
 
-        // Flush volume before callback so session JSONL is persisted
+        // Write completion marker and flush volume before callback
+        writeCompletionMarker(currentSessionId, "completed");
         flushVolume();
         await callCallback("completed", currentSessionId);
       }
@@ -346,6 +373,7 @@ async function main() {
           num_turns: 0,
         },
       });
+      writeCompletionMarker(currentSessionId, "completed");
       flushVolume();
       await callCallback("completed", currentSessionId);
     }
@@ -353,6 +381,7 @@ async function main() {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("[AGENT] Exception:", errorMessage);
     emit({ type: "process_error", message: errorMessage });
+    writeCompletionMarker(undefined, "error", errorMessage);
     flushVolume();
     await callCallback("error", undefined, errorMessage);
   } finally {

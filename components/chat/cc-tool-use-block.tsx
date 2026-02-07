@@ -14,6 +14,42 @@ interface CCToolUseBlockProps {
 const MAX_COLLAPSED_LINES = 4;
 
 /**
+ * Get Korean label for WebFetch tool based on URL and method
+ */
+function getKoreanToolLabel(block: ToolUseBlock): string | null {
+  if (block.name !== "WebFetch" || !block.input.url) {
+    return null;
+  }
+
+  const url = String(block.input.url);
+  const method = block.input.method ? String(block.input.method).toUpperCase() : "GET";
+
+  // Check for context endpoint
+  if (url.includes("/context")) {
+    return "프로필을 확인하고 있어요...";
+  }
+
+  // Check for logs endpoint
+  if (url.includes("/logs")) {
+    // Search operation: GET with query param or URL contains ?q=
+    if (method === "GET" || url.includes("?q=")) {
+      return "과거 상담 기록을 찾아보고 있어요...";
+    }
+    // Create operation: POST
+    if (method === "POST") {
+      return "상담 내용을 정리하고 있어요...";
+    }
+  }
+
+  // Check for summary endpoint
+  if (url.includes("/summary")) {
+    return "상태를 업데이트하고 있어요...";
+  }
+
+  return null;
+}
+
+/**
  * Format tool header info for display
  */
 function formatToolHeader(
@@ -223,7 +259,9 @@ export function CCToolUseBlock({
           {isLoading ? (
             <div className="flex items-center gap-1.5">
               <span className="text-muted-foreground/50">└─</span>
-              <span className="animate-pulse">Running...</span>
+              <span className="animate-pulse">
+                {getKoreanToolLabel(block) || "Running..."}
+              </span>
             </div>
           ) : isEdit && editInput ? (
             <EditDiff

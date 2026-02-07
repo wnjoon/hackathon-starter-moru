@@ -185,6 +185,8 @@ export interface ConversationResponse {
 export interface SendMessageRequest {
   conversationId: string | null;
   content: string;
+  dogId?: string;
+  userId?: string;
 }
 
 export interface SendMessageResponse {

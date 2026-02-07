@@ -1,0 +1,66 @@
+/**
+ * Popular dog breeds in Korea
+ */
+
+export interface Breed {
+  id: string;
+  nameKo: string;
+  nameEn: string;
+}
+
+export const breeds: Breed[] = [
+  { id: "maltese", nameKo: "말티즈", nameEn: "Maltese" },
+  { id: "pomeranian", nameKo: "포메라니안", nameEn: "Pomeranian" },
+  { id: "poodle", nameKo: "푸들", nameEn: "Poodle" },
+  { id: "toy-poodle", nameKo: "토이푸들", nameEn: "Toy Poodle" },
+  { id: "chihuahua", nameKo: "치와와", nameEn: "Chihuahua" },
+  { id: "shih-tzu", nameKo: "시츄", nameEn: "Shih Tzu" },
+  { id: "yorkshire-terrier", nameKo: "요크셔테리어", nameEn: "Yorkshire Terrier" },
+  { id: "bichon-frise", nameKo: "비숑 프리제", nameEn: "Bichon Frise" },
+  { id: "cocker-spaniel", nameKo: "코커 스패니얼", nameEn: "Cocker Spaniel" },
+  { id: "dachshund", nameKo: "닥스훈트", nameEn: "Dachshund" },
+  { id: "french-bulldog", nameKo: "프렌치 불독", nameEn: "French Bulldog" },
+  { id: "welsh-corgi", nameKo: "웰시 코기", nameEn: "Welsh Corgi" },
+  { id: "beagle", nameKo: "비글", nameEn: "Beagle" },
+  { id: "golden-retriever", nameKo: "골든 리트리버", nameEn: "Golden Retriever" },
+  { id: "labrador-retriever", nameKo: "래브라도 리트리버", nameEn: "Labrador Retriever" },
+  { id: "samoyed", nameKo: "사모예드", nameEn: "Samoyed" },
+  { id: "siberian-husky", nameKo: "시베리안 허스키", nameEn: "Siberian Husky" },
+  { id: "border-collie", nameKo: "보더 콜리", nameEn: "Border Collie" },
+  { id: "german-shepherd", nameKo: "저먼 셰퍼드", nameEn: "German Shepherd" },
+  { id: "jindo", nameKo: "진돗개", nameEn: "Korean Jindo" },
+  { id: "sapsaree", nameKo: "삽살개", nameEn: "Sapsaree" },
+  { id: "pungsan", nameKo: "풍산개", nameEn: "Pungsan Dog" },
+  { id: "miniature-schnauzer", nameKo: "미니어처 슈나우저", nameEn: "Miniature Schnauzer" },
+  { id: "miniature-pinscher", nameKo: "미니핀", nameEn: "Miniature Pinscher" },
+  { id: "papillon", nameKo: "파피용", nameEn: "Papillon" },
+  { id: "cavalier", nameKo: "카발리에 킹 찰스", nameEn: "Cavalier King Charles Spaniel" },
+  { id: "boston-terrier", nameKo: "보스턴 테리어", nameEn: "Boston Terrier" },
+  { id: "pug", nameKo: "퍼그", nameEn: "Pug" },
+  { id: "english-bulldog", nameKo: "잉글리시 불독", nameEn: "English Bulldog" },
+  { id: "jack-russell", nameKo: "잭 러셀 테리어", nameEn: "Jack Russell Terrier" },
+  { id: "shiba-inu", nameKo: "시바 이누", nameEn: "Shiba Inu" },
+  { id: "akita", nameKo: "아키타", nameEn: "Akita" },
+  { id: "doberman", nameKo: "도베르만", nameEn: "Doberman" },
+  { id: "rottweiler", nameKo: "로트와일러", nameEn: "Rottweiler" },
+  { id: "boxer", nameKo: "복서", nameEn: "Boxer" },
+  { id: "dalmatian", nameKo: "달마시안", nameEn: "Dalmatian" },
+  { id: "great-dane", nameKo: "그레이트 데인", nameEn: "Great Dane" },
+  { id: "standard-poodle", nameKo: "스탠다드 푸들", nameEn: "Standard Poodle" },
+  { id: "coton-de-tulear", nameKo: "코통 드 툴레아", nameEn: "Coton de Tulear" },
+  { id: "havanese", nameKo: "하바니즈", nameEn: "Havanese" },
+  { id: "italian-greyhound", nameKo: "이탈리안 그레이하운드", nameEn: "Italian Greyhound" },
+  { id: "whippet", nameKo: "위핏", nameEn: "Whippet" },
+  { id: "australian-shepherd", nameKo: "오스트레일리안 셰퍼드", nameEn: "Australian Shepherd" },
+  { id: "shetland-sheepdog", nameKo: "셔틀랜드 쉽독", nameEn: "Shetland Sheepdog" },
+  { id: "lhasa-apso", nameKo: "라사 압소", nameEn: "Lhasa Apso" },
+  { id: "pekinese", nameKo: "페키니즈", nameEn: "Pekingese" },
+  { id: "west-highland", nameKo: "웨스트 하이랜드 테리어", nameEn: "West Highland White Terrier" },
+  { id: "scottish-terrier", nameKo: "스코티시 테리어", nameEn: "Scottish Terrier" },
+  { id: "maltipoo", nameKo: "말티푸", nameEn: "Maltipoo" },
+  { id: "pomsky", nameKo: "폼스키", nameEn: "Pomsky" },
+  { id: "goldendoodle", nameKo: "골든두들", nameEn: "Goldendoodle" },
+  { id: "cockapoo", nameKo: "코카푸", nameEn: "Cockapoo" },
+  { id: "mixed", nameKo: "믹스견", nameEn: "Mixed Breed" },
+  { id: "other", nameKo: "기타", nameEn: "Other" },
+];

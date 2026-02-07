@@ -13,7 +13,7 @@ import type { SendMessageRequest, SendMessageResponse } from "@/lib/types";
 export async function POST(request: NextRequest) {
   try {
     const body: SendMessageRequest = await request.json();
-    const { conversationId, content } = body;
+    const { conversationId, content, dogId, userId } = body;
 
     if (!content?.trim()) {
       return NextResponse.json(
@@ -25,6 +25,8 @@ export async function POST(request: NextRequest) {
     let conversation;
     let volumeId: string;
     let sessionId: string | undefined;
+    let finalDogId: string | undefined;
+    let finalUserId: string | undefined;
 
     if (conversationId) {
       // Follow-up message to existing conversation
@@ -48,10 +50,16 @@ export async function POST(request: NextRequest) {
 
       volumeId = conversation.volumeId!;
       sessionId = conversation.sessionId || undefined;
+      finalDogId = conversation.dogId || undefined;
+      finalUserId = conversation.userId || undefined;
     } else {
       // New conversation - create record first
       conversation = await prisma.conversation.create({
-        data: { status: "idle" },
+        data: {
+          status: "idle",
+          dogId: dogId || null,
+          userId: userId || null,
+        },
       });
 
       // Create volume for this conversation
@@ -62,15 +70,37 @@ export async function POST(request: NextRequest) {
         where: { id: conversation.id },
         data: { volumeId },
       });
+
+      finalDogId = dogId;
+      finalUserId = userId;
     }
+
+    // Prepare message content with system context if dogId is available
+    const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+    let messageContent = content;
+
+    if (finalDogId) {
+      const systemContext = `[SYSTEM_CONTEXT]
+BASE_URL=${baseUrl}
+DOG_ID=${finalDogId}
+USER_ID=${finalUserId || ""}
+[/SYSTEM_CONTEXT]
+
+${content}`;
+      messageContent = systemContext;
+    }
+
+    console.log(`[POST] conversationId=${conversation.id} dogId=${finalDogId || "NONE"} volumeId=${volumeId} contentLength=${messageContent.length}`);
 
     // Create sandbox and launch agent (fire-and-forget, no streaming connection)
     const { sandboxId } = await createAndLaunchAgent(
       volumeId,
       conversation.id,
-      content,
+      messageContent,
       sessionId
     );
+
+    console.log(`[POST] Sandbox created: ${sandboxId}`);
 
     // Update conversation to running state
     await prisma.conversation.update({

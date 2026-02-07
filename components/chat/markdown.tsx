@@ -13,7 +13,7 @@ function parseMarkdownIntoBlocks(markdown: string): string[] {
 const MemoizedMarkdownBlock = memo(
   ({ content }: { content: string }) => {
     return (
-      <div className="prose text-foreground prose-headings:font-medium prose-h1:text-2xl prose-sm prose-invert prose-neutral prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-muted-foreground prose-code:rounded-sm prose-code:border prose-code:bg-card prose-code:px-1 prose-code:before:content-none prose-code:after:content-none prose-code:font-normal prose-pre:p-0 prose-pre:bg-background max-w-none">
+      <div className="prose text-foreground prose-headings:font-medium prose-h1:text-2xl prose-sm prose-neutral prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-muted-foreground prose-code:rounded-sm prose-code:border prose-code:bg-card prose-code:px-1 prose-code:before:content-none prose-code:after:content-none prose-code:font-normal prose-pre:p-0 prose-pre:bg-background max-w-none">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{

@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -33,26 +31,26 @@
 }
 
 :root {
-  --radius: 0.5rem;
-  --background: oklch(0.1957 0 0);
-  --foreground: oklch(0.9551 0 0);
-  --card: oklch(0.2393 0 0);
-  --card-foreground: oklch(0.9551 0 0);
-  --popover: oklch(0.2393 0 0);
-  --popover-foreground: oklch(0.9551 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.2393 0 0);
-  --secondary: oklch(0.2393 0 0);
-  --secondary-foreground: oklch(0.9551 0 0);
-  --muted: oklch(0.2393 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.285 0 0);
-  --accent-foreground: oklch(0.9551 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.285 0 0);
-  --input: oklch(0.2393 0 0);
-  --ring: oklch(0.556 0 0);
-  --highlight: oklch(0.3715 0 0);
+  --radius: 0.625rem;
+  --background: oklch(0.96 0.01 80);
+  --foreground: oklch(0.25 0.02 50);
+  --card: oklch(0.98 0.008 80);
+  --card-foreground: oklch(0.25 0.02 50);
+  --popover: oklch(0.98 0.008 80);
+  --popover-foreground: oklch(0.25 0.02 50);
+  --primary: oklch(0.65 0.15 55);
+  --primary-foreground: oklch(0.98 0.005 80);
+  --secondary: oklch(0.92 0.02 80);
+  --secondary-foreground: oklch(0.35 0.03 50);
+  --muted: oklch(0.93 0.015 80);
+  --muted-foreground: oklch(0.55 0.03 60);
+  --accent: oklch(0.90 0.03 75);
+  --accent-foreground: oklch(0.30 0.03 50);
+  --destructive: oklch(0.60 0.20 25);
+  --border: oklch(0.88 0.02 80);
+  --input: oklch(0.93 0.015 80);
+  --ring: oklch(0.65 0.15 55);
+  --highlight: oklch(0.70 0.12 60);
 }
 
 @layer base {
@@ -72,13 +70,13 @@ body,
 
 /* User message styling */
 .user-message-border {
-  background: linear-gradient(var(--border), var(--border), var(--highlight));
+  background: linear-gradient(var(--border), var(--border), oklch(0.70 0.12 60));
 }
 
 .user-message-shadow {
   --highlight-shadow:
-    0 10px 15px -3px oklch(0.3715 0 0 / 0.1),
-    0 4px 6px -4px oklch(0.3715 0 0 / 0.1);
+    0 10px 15px -3px oklch(0.70 0.12 60 / 0.1),
+    0 4px 6px -4px oklch(0.70 0.12 60 / 0.1);
   box-shadow:
     var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
     var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow),
@@ -89,9 +87,9 @@ body,
 .shimmer {
   background: linear-gradient(
     90deg,
-    #737373 25%,
+    oklch(0.55 0.03 60) 25%,
     var(--foreground) 50%,
-    #737373 75%
+    oklch(0.55 0.03 60) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 2s infinite linear;
@@ -107,6 +105,19 @@ body,
   100% {
     background-position: -200% 0;
   }
+}
+
+/* Neumorphic styling */
+.neumorphic {
+  box-shadow:
+    6px 6px 12px oklch(0.88 0.015 80),
+    -6px -6px 12px oklch(1 0.005 80);
+}
+
+.neumorphic-inset {
+  box-shadow:
+    inset 4px 4px 8px oklch(0.88 0.015 80),
+    inset -4px -4px 8px oklch(1 0.005 80);
 }
 
 /* Blinking animation for tool status */

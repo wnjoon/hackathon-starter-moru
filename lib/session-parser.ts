@@ -71,5 +71,5 @@ export function parseSessionJSONL(content: string): SessionEntry[] {
  * So the file is at /workspace/data/.claude/projects/-workspace-data/{sessionId}.jsonl
  */
 export function getSessionFilePath(sessionId: string): string {
-  return `.claude/projects/-workspace-data/${sessionId}.jsonl`;
+  return `/.claude/projects/-workspace-data/${sessionId}.jsonl`;
 }

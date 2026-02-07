@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import Link from "next/link";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -9,17 +10,27 @@ import {
 import { CCMessages } from "@/components/chat/cc-messages";
 import { PromptForm } from "@/components/chat/prompt-form";
 import { WorkspacePanel } from "@/components/workspace/workspace-panel";
+import { DogSelector } from "@/components/dog/dog-selector";
+import { useUserId } from "@/lib/use-user-id";
 import type { SessionEntry, ConversationResponse } from "@/lib/types";
 import { PanelRight } from "lucide-react";
 
-// Pending message type for optimistic UI
 interface PendingMessage {
   id: string;
   content: string;
   timestamp: string;
 }
 
+interface Dog {
+  dog_id: string;
+  name: string;
+  breed: string;
+}
+
 export default function Home() {
+  const userId = useUserId();
+  const [dogs, setDogs] = useState<Dog[]>([]);
+  const [selectedDogId, setSelectedDogId] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [status, setStatus] = useState<ConversationResponse["status"]>("idle");
   const [serverMessages, setServerMessages] = useState<SessionEntry[]>([]);
@@ -27,13 +38,24 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [showWorkspace, setShowWorkspace] = useState(true);
+  const [showWorkspace, setShowWorkspace] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Track post-completion poll attempts to avoid infinite polling
   const postCompletionPollsRef = useRef(0);
 
-  // Extract text from a user message content (handles both string and ContentBlock[]).
+  // Fetch dogs when userId is available
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`/api/dogs?userId=${userId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setDogs(data);
+        if (data.length > 0 && !selectedDogId) {
+          setSelectedDogId(data[0].dog_id);
+        }
+      })
+      .catch(console.error);
+  }, [userId, selectedDogId]);
+
   const getUserMessageText = useCallback((content: string | unknown[]): string => {
     if (typeof content === "string") return content;
     if (Array.isArray(content)) {
@@ -45,28 +67,22 @@ export default function Home() {
     return "";
   }, []);
 
-  // Check if a pending message has a matching user message in server data.
-  // Used to remove pending messages once the server confirms them.
   const hasPendingMatch = useCallback(
     (pending: PendingMessage, serverMsgs: SessionEntry[]) => {
       return serverMsgs.some(
         (m) =>
           m.type === "user" &&
-          getUserMessageText(m.message.content) === pending.content
+          getUserMessageText(m.message.content).includes(pending.content)
       );
     },
     [getUserMessageText]
   );
 
-  // Polling for conversation updates
-  // Keeps polling while "running", and also after "completed"/"error" if
-  // pending messages haven't appeared in server data yet (volume sync delay).
+  // Polling
   useEffect(() => {
     if (!conversationId) return;
 
     const isDone = status === "completed" || status === "error";
-
-    // Stop polling once done AND all pending messages are resolved (or retries exhausted)
     if (isDone && (pendingMessages.length === 0 || postCompletionPollsRef.current >= 10)) return;
     if (!isDone && status !== "running") return;
 
@@ -75,13 +91,8 @@ export default function Home() {
         const response = await fetch(`/api/conversations/${conversationId}`);
         if (response.ok) {
           const data: ConversationResponse = await response.json();
-
-          // Update server messages
           setServerMessages(data.messages);
 
-          // Remove only the pending messages that now appear in server data.
-          // This handles both first-turn (no prior messages) and multi-turn
-          // (prior messages exist but new ones haven't synced yet).
           if (data.messages.length > 0) {
             setPendingMessages((prev) =>
               prev.filter((p) => !hasPendingMatch(p, data.messages))
@@ -104,7 +115,6 @@ export default function Home() {
     return () => clearInterval(pollInterval);
   }, [conversationId, status, pendingMessages.length, hasPendingMatch]);
 
-  // Compute combined messages: server messages + pending messages as SessionEntry
   const messages: SessionEntry[] = [
     ...serverMessages,
     ...pendingMessages.map((p): SessionEntry => ({
@@ -121,18 +131,21 @@ export default function Home() {
     })),
   ];
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [serverMessages, pendingMessages]);
 
   const handleSubmit = useCallback(
     async (content: string) => {
+      if (!selectedDogId) {
+        setErrorMessage("반려견을 먼저 등록해주세요.");
+        return;
+      }
+
       setIsSubmitting(true);
       setErrorMessage(null);
       postCompletionPollsRef.current = 0;
 
-      // Add pending message immediately for optimistic UI
       const pendingId = `pending-${Date.now()}`;
       const pendingMsg: PendingMessage = {
         id: pendingId,
@@ -148,6 +161,8 @@ export default function Home() {
           body: JSON.stringify({
             conversationId,
             content,
+            dogId: selectedDogId,
+            userId,
           }),
         });
 
@@ -160,57 +175,107 @@ export default function Home() {
         setConversationId(data.conversationId);
         setStatus("running");
       } catch (error) {
-        // Remove pending message on error
         setPendingMessages((prev) => prev.filter((m) => m.id !== pendingId));
-        setErrorMessage(error instanceof Error ? error.message : "Unknown error");
+        setErrorMessage(error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.");
       } finally {
         setIsSubmitting(false);
       }
     },
-    [conversationId]
+    [conversationId, selectedDogId, userId]
   );
+
+  const handleDogSelect = useCallback((dogId: string) => {
+    setSelectedDogId(dogId);
+    // Reset conversation when switching dogs
+    setConversationId(null);
+    setServerMessages([]);
+    setPendingMessages([]);
+    setStatus("idle");
+    setErrorMessage(null);
+  }, []);
 
   const isLoading = status === "running" || isSubmitting;
   const hasMessages = messages.length > 0;
+  const selectedDog = dogs.find((d) => d.dog_id === selectedDogId);
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* Header - minimal like Maru */}
+      {/* Header */}
       <header className="flex items-center justify-between border-b border-border px-4 h-[52px]">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-sm font-medium">hackathon-starter</span>
+        <div className="flex items-center gap-3">
+          <span className="text-lg">🐾</span>
+          <span className="font-semibold text-sm text-foreground">나의 반려견 전담 조언자</span>
         </div>
-        {!showWorkspace && (
-          <button
-            onClick={() => setShowWorkspace(true)}
-            className="p-1.5 hover:bg-muted rounded transition-colors"
-            title="Open workspace"
-          >
-            <PanelRight className="size-4 text-muted-foreground" />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {dogs.length > 0 && (
+            <DogSelector
+              dogs={dogs}
+              selectedDogId={selectedDogId}
+              onSelect={handleDogSelect}
+            />
+          )}
+          {hasMessages && !showWorkspace && (
+            <button
+              onClick={() => setShowWorkspace(true)}
+              className="p-1.5 hover:bg-accent rounded-lg transition-colors"
+              title="작업 공간 열기"
+            >
+              <PanelRight className="size-4 text-muted-foreground" />
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Main content */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {/* Chat panel */}
         <ResizablePanel defaultSize={showWorkspace ? 55 : 100} minSize={40}>
           <div className="flex h-full flex-col">
-            {/* Messages area */}
             <div className="flex-1 overflow-auto">
               {!hasMessages ? (
                 <div className="flex h-full flex-col items-center justify-center px-4">
-                  <h1 className="font-mono text-lg mb-6">
-                    ✳ What can I help with?
-                  </h1>
-                  <div className="w-full max-w-xl">
-                    <PromptForm
-                      onSubmit={handleSubmit}
-                      isLoading={isLoading}
-                      disabled={status === "running"}
-                      placeholder="Ask anything"
-                    />
-                  </div>
+                  {dogs.length === 0 ? (
+                    /* No dogs registered - show welcome */
+                    <div className="flex flex-col items-center gap-6 text-center">
+                      <div className="text-6xl">🐕</div>
+                      <div>
+                        <h1 className="text-xl font-bold text-foreground mb-2">
+                          반려견 전담 조언자에 오신 것을 환영합니다
+                        </h1>
+                        <p className="text-muted-foreground text-sm">
+                          먼저 반려견을 등록하면, 맞춤형 상담을 시작할 수 있어요.
+                        </p>
+                      </div>
+                      <Link
+                        href="/register"
+                        className="px-6 py-3 rounded-xl bg-gradient-to-br from-orange-400 to-orange-500 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                      >
+                        반려견 등록하기
+                      </Link>
+                    </div>
+                  ) : (
+                    /* Has dogs - show chat prompt */
+                    <div className="w-full max-w-xl flex flex-col items-center gap-6">
+                      <div className="text-center">
+                        <div className="text-5xl mb-4">🐾</div>
+                        <h1 className="text-lg font-bold text-foreground mb-1">
+                          {selectedDog
+                            ? `${selectedDog.name}에 대해 궁금한 점이 있으신가요?`
+                            : "반려견을 선택해주세요"}
+                        </h1>
+                        <p className="text-muted-foreground text-sm">
+                          강형욱 훈련사 스타일로 맞춤 상담을 해드릴게요
+                        </p>
+                      </div>
+                      <div className="w-full">
+                        <PromptForm
+                          onSubmit={handleSubmit}
+                          isLoading={isLoading}
+                          disabled={status === "running" || !selectedDogId}
+                          placeholder="우리 아이에 대해 궁금한 점을 물어보세요..."
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="max-w-3xl mx-auto px-4 py-6">
@@ -220,21 +285,18 @@ export default function Home() {
               )}
             </div>
 
-            {/* Error display */}
             {errorMessage && (
-              <div className="mx-4 mb-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="mx-4 mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {errorMessage}
               </div>
             )}
 
-            {/* Status indicator */}
             {status === "running" && hasMessages && (
               <div className="mx-4 mb-2 text-sm text-muted-foreground">
-                <span className="animate-pulse">Processing...</span>
+                <span className="animate-pulse">상담 중...</span>
               </div>
             )}
 
-            {/* Bottom prompt form (only when there are messages) */}
             {hasMessages && (
               <div className="border-t border-border p-4">
                 <div className="max-w-3xl mx-auto">
@@ -242,7 +304,7 @@ export default function Home() {
                     onSubmit={handleSubmit}
                     isLoading={isLoading}
                     disabled={status === "running"}
-                    placeholder="Follow-up message..."
+                    placeholder="추가 질문을 입력하세요..."
                   />
                 </div>
               </div>

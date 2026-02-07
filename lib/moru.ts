@@ -1,6 +1,6 @@
 import Sandbox, { Volume } from "@moru-ai/core";
 
-const TEMPLATE_NAME = "moru-hackathon-agent";
+const TEMPLATE_NAME = "moru-dog-advisor";
 
 /**
  * Create a new volume for a conversation
@@ -64,8 +64,10 @@ export async function createAndLaunchAgent(
   // Launch agent fully detached with nohup — no streaming connection maintained.
   // The agent reads from the input file, runs query(), and calls CALLBACK_URL when done.
   const callbackUrl = `${baseUrl}/api/conversations/${conversationId}/status`;
+  const claudeModel = process.env.CLAUDE_MODEL || "";
+  const anthropicApiKey = process.env.ANTHROPIC_API_KEY || "";
   await sandbox.commands.run(
-    `nohup bash -c 'cd /workspace/data && WORKSPACE_DIR=/workspace/data CALLBACK_URL="${callbackUrl}" RESUME_SESSION_ID="${sessionId || ""}" npx tsx /app/agent.mts < /tmp/agent_input.txt >> /tmp/agent_stdout.log 2>> /tmp/agent_stderr.log' &>/dev/null &`
+    `nohup bash -c 'cd /workspace/data && WORKSPACE_DIR=/workspace/data CALLBACK_URL="${callbackUrl}" RESUME_SESSION_ID="${sessionId || ""}" CLAUDE_MODEL="${claudeModel}" ANTHROPIC_API_KEY="${anthropicApiKey}" npx tsx /app/agent.mts < /tmp/agent_input.txt >> /tmp/agent_stdout.log 2>> /tmp/agent_stderr.log' &>/dev/null &`
   );
 
   return { sandboxId: sandbox.sandboxId };
@@ -177,6 +179,27 @@ export async function readVolumeFile(
   }
 
   return response.text();
+}
+
+/**
+ * Read a file directly from a running sandbox filesystem.
+ * This bypasses JuiceFS writeback cache issues — files are immediately available.
+ * Falls back to null if the sandbox is dead or file doesn't exist.
+ */
+export async function readSandboxFile(
+  sandboxId: string,
+  filePath: string
+): Promise<string | null> {
+  try {
+    const sbx = await Sandbox.connect(sandboxId);
+    const result = await sbx.commands.run(`cat '${filePath.replace(/'/g, "'\\''")}'`);
+    if (result.exitCode === 0 && result.stdout) {
+      return result.stdout;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**
